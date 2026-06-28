@@ -14,9 +14,9 @@ export default function Login() {
     setError('');
     try {
       const { user } = await authService.login({ email, password });
-      if (user.role === 'admin') {
+      if (user?.role === 'admin') {
         window.location.href = '/admin';
-      } else if (user.role === 'teknisi') {
+      } else if (user?.role === 'teknisi') {
         window.location.href = '/teknisi';
       } else {
         window.location.href = '/dashboard';

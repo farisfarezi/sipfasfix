@@ -23,6 +23,20 @@ const superAdminUser = {
 
 const normalizeInput = (value = '') => value.trim().toLowerCase();
 
+const persistSessionUser = (user) => {
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem('mock_session', 'true');
+    window.localStorage.setItem('mock_session_user', JSON.stringify(user));
+  }
+};
+
+const clearSessionUser = () => {
+  if (typeof window !== 'undefined') {
+    window.localStorage.removeItem('mock_session');
+    window.localStorage.removeItem('mock_session_user');
+  }
+};
+
 const findUserByCredentials = (credentials = {}) => {
   const input = normalizeInput(credentials.email || credentials.username || '');
   const password = String(credentials.password || '');
@@ -48,47 +62,66 @@ const isSuperAdminCredentials = (credentials = {}) => {
 export const authService = {
   register: async (data) => {
     console.log('Mock register', data);
-    return { user: mockAdminUser };
+    const createdUser = await import('./userService').then(({ userService }) => userService.createUser({
+      nama: data.nama,
+      email: data.email,
+      username: data.email?.split('@')[0] || data.nama?.toLowerCase().replace(/\s+/g, ''),
+      password: data.password,
+      identitas: data.identitas,
+      noHp: data.noHp,
+      role: data.role,
+    }));
+
+    return { user: createdUser };
   },
 
   login: async (credentials) => {
     console.log('Mock login', credentials);
 
     if (isSuperAdminCredentials(credentials)) {
-      localStorage.setItem('mock_session', 'true');
+      persistSessionUser(superAdminUser);
       return { user: superAdminUser };
+    }
+
+    if (normalizeInput(credentials.email || credentials.username || '') === 'admin@polinela.ac.id' && String(credentials.password || '') === 'Admin123!') {
+      persistSessionUser(mockAdminUser);
+      return { user: mockAdminUser };
     }
 
     const matchedUser = findUserByCredentials(credentials);
     if (matchedUser) {
-      localStorage.setItem('mock_session', 'true');
+      persistSessionUser(matchedUser);
       return { user: matchedUser };
     }
 
-    // Otomatis berhasil login sebagai admin apa pun passwordnya
-    localStorage.setItem('mock_session', 'true');
-    return { user: mockAdminUser };
+    throw new Error('Email/username atau password salah.');
   },
 
   logout: async () => {
     console.log('Mock logout');
-    localStorage.removeItem('mock_session');
+    clearSessionUser();
     window.location.href = '/login';
   },
 
   getUser: async () => {
-    // Jika tidak ada sesi di localStorage, kembalikan null (belum login)
-    if (!localStorage.getItem('mock_session')) return null;
-    return mockAdminUser;
+    if (typeof window === 'undefined' || !window.localStorage.getItem('mock_session')) return null;
+    const stored = window.localStorage.getItem('mock_session_user');
+    if (!stored) return null;
+    return JSON.parse(stored);
   },
 
   getSession: async () => {
-    if (!localStorage.getItem('mock_session')) return null;
-    return { user: mockAdminUser };
+    if (typeof window === 'undefined' || !window.localStorage.getItem('mock_session')) return null;
+    const stored = window.localStorage.getItem('mock_session_user');
+    if (!stored) return null;
+    return { user: JSON.parse(stored) };
   },
 
   getUserProfile: async (userId) => {
-    // Selalu kembalikan profil admin untuk bypass UI
-    return mockAdminUser;
+    const stored = typeof window !== 'undefined' ? window.localStorage.getItem('mock_session_user') : null;
+    if (stored) return JSON.parse(stored);
+
+    const profile = (globalThis.mockUsersState || mockUsers).find((u) => u.id === userId);
+    return profile || mockAdminUser;
   },
 };

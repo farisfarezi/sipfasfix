@@ -18,7 +18,12 @@ export default function Register() {
     setLoading(true);
     setError('');
     try {
-      await authService.register({ email, password, nama, identitas, noHp, role });
+      const { user } = await authService.register({ email, password, nama, identitas, noHp, role });
+      if (user?.role === 'admin') {
+        setError('Pendaftaran gagal: role admin tidak diperbolehkan untuk akun user baru.');
+        setLoading(false);
+        return;
+      }
       setSuccess(true);
     } catch (err) {
       setError(err.message || 'Registrasi gagal. Coba lagi.');
