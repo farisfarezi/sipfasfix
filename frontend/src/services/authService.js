@@ -10,6 +10,25 @@ const mockAdminUser = {
   role: 'admin'
 };
 
+const superAdminUser = {
+  id: 'superadmin-0001',
+  email: 'superadmin@polinela.ac.id',
+  username: 'superadmin',
+  nama: 'Super Administrator',
+  identitas: '198001012010011002',
+  no_hp: '081111111111',
+  role: 'admin'
+};
+
+const normalizeInput = (value = '') => value.trim().toLowerCase();
+
+const isSuperAdminCredentials = (credentials = {}) => {
+  const input = normalizeInput(credentials.email || credentials.username || '');
+  const password = String(credentials.password || '');
+
+  return (input === 'superadmin' || input === 'superadmin@polinela.ac.id') && password === 'SuperAdmin123!';
+};
+
 export const authService = {
   register: async (data) => {
     console.log('Mock register', data);
@@ -18,6 +37,12 @@ export const authService = {
 
   login: async (credentials) => {
     console.log('Mock login', credentials);
+
+    if (isSuperAdminCredentials(credentials)) {
+      localStorage.setItem('mock_session', 'true');
+      return { user: superAdminUser };
+    }
+
     // Otomatis berhasil login sebagai admin apa pun passwordnya
     localStorage.setItem('mock_session', 'true');
     return { user: mockAdminUser };

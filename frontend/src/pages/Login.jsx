@@ -39,6 +39,12 @@ export default function Login() {
       )}
 
       <form onSubmit={handleLogin} className="flex flex-col gap-4">
+        <div className="rounded-soft border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-text-main">
+          <p className="font-semibold text-primary">Akun superadmin demo</p>
+          <p>Username: <span className="font-bold">superadmin</span></p>
+          <p>Password: <span className="font-bold">SuperAdmin123!</span></p>
+        </div>
+
         <div className="flex flex-col gap-1">
           <label className="font-bold text-sm text-text-main">Email Institusi</label>
           <input
