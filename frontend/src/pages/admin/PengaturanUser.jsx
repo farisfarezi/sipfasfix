@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { userService } from '../../services/userService';
-import { Loader2, Shield } from 'lucide-react';
-import SelectField from '../../components/common/SelectField';
+import { Loader2, Shield, KeyRound, UserRound } from 'lucide-react';
 
 export default function PengaturanUser() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({ username: '', password: '' });
 
   const fetchUsers = async () => {
     try {
@@ -31,6 +32,29 @@ export default function PengaturanUser() {
     }
   };
 
+  const startEdit = (user) => {
+    setEditingId(user.id);
+    setFormData({ username: user.username || '', password: '' });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setFormData({ username: '', password: '' });
+  };
+
+  const saveCredentials = async (id) => {
+    try {
+      await userService.updateCredentials(id, {
+        username: formData.username.trim(),
+        password: formData.password.trim(),
+      });
+      cancelEdit();
+      fetchUsers();
+    } catch (err) {
+      alert('Gagal update username/password: ' + err.message);
+    }
+  };
+
   return (
     <div>
       <div className="mb-8">
@@ -49,6 +73,7 @@ export default function PengaturanUser() {
                   <th className="px-6 py-4 font-bold">Pengguna</th>
                   <th className="px-6 py-4 font-bold">Identitas (NIM/NIP)</th>
                   <th className="px-6 py-4 font-bold w-48">Role Sistem</th>
+                  <th className="px-6 py-4 font-bold">Akses Login</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
@@ -70,6 +95,39 @@ export default function PengaturanUser() {
                         <option value="teknisi">Teknisi</option>
                         <option value="admin">Admin</option>
                       </select>
+                    </td>
+                    <td className="px-6 py-4">
+                      {editingId === u.id ? (
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <UserRound size={16} className="text-primary" />
+                            <input
+                              value={formData.username}
+                              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                              placeholder="Username"
+                              className="w-full border border-outline rounded p-2 text-sm"
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <KeyRound size={16} className="text-primary" />
+                            <input
+                              type="password"
+                              value={formData.password}
+                              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                              placeholder="Password baru"
+                              className="w-full border border-outline rounded p-2 text-sm"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => saveCredentials(u.id)} className="px-3 py-2 bg-primary text-white rounded text-sm font-semibold">Simpan</button>
+                            <button onClick={cancelEdit} className="px-3 py-2 border border-outline rounded text-sm">Batal</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button onClick={() => startEdit(u)} className="px-3 py-2 border border-outline rounded text-sm font-semibold hover:border-primary hover:text-primary">
+                          Edit Login
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

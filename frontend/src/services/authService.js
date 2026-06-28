@@ -1,5 +1,6 @@
 // IMPORT SEMENTARA DI-COMMENT AGAR TIDAK ERROR KARENA SUPABASE BELUM TERHUBUNG
 // import { supabase } from '../lib/supabase';
+import { mockUsers } from './userService';
 
 const mockAdminUser = {
   id: 'admin-1234-5678',
@@ -22,6 +23,21 @@ const superAdminUser = {
 
 const normalizeInput = (value = '') => value.trim().toLowerCase();
 
+const findUserByCredentials = (credentials = {}) => {
+  const input = normalizeInput(credentials.email || credentials.username || '');
+  const password = String(credentials.password || '');
+
+  if (!input || !password) return null;
+
+  const mockUser = (globalThis.mockUsersState || mockUsers).find?.((u) => {
+    const username = normalizeInput(u.username || '');
+    const email = normalizeInput(u.email || '');
+    return (username === input || email === input) && String(u.password || '') === password;
+  });
+
+  return mockUser || null;
+};
+
 const isSuperAdminCredentials = (credentials = {}) => {
   const input = normalizeInput(credentials.email || credentials.username || '');
   const password = String(credentials.password || '');
@@ -41,6 +57,12 @@ export const authService = {
     if (isSuperAdminCredentials(credentials)) {
       localStorage.setItem('mock_session', 'true');
       return { user: superAdminUser };
+    }
+
+    const matchedUser = findUserByCredentials(credentials);
+    if (matchedUser) {
+      localStorage.setItem('mock_session', 'true');
+      return { user: matchedUser };
     }
 
     // Otomatis berhasil login sebagai admin apa pun passwordnya
